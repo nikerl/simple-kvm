@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - IP-KVM</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <link rel="shortcut icon" href="/static/assets/favicon.png" type="image/x-icon">
+</head>
+<body class="login-page">
+    <div class="login-container">
+        <h1><img src="/static/assets/favicon.png" alt="" class="logo">IP-KVM</h1>
+        <form action="/login" method="POST">
+            <div class="field">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" autocomplete="username" required autofocus>
+            </div>
+            <div class="field">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" autocomplete="current-password" required>
+            </div>
+            <button type="submit">Login</button>
+        </form>
+        <div style="margin-top: 15px">
+            <label>{{.Message}}</label>
+        </div>
+    </div>
+</body>
+</html>

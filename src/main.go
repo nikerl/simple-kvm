@@ -2,22 +2,28 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"html/template"
+	"io"
 	"log"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
+	"os"
 	"github.com/gorilla/websocket"
+	_ "github.com/joho/godotenv/autoload"
 )
 
-const USTREAMER_URL = "http://192.168.0.30:8080"
+var USTREAMER_URL = os.Getenv("USTREAMER_URL")
 
-var kvmTemplate = template.Must(template.ParseFiles("static/index.html"))
+var kvmTemplate = template.Must(template.ParseFiles("templates/index.html"))
 
 type kvmPage struct {
 	UstreamerURL string `json:"ustreamer_url"`
 }
 
 var upgrader websocket.Upgrader
+
+
 
 func serveIndex(w http.ResponseWriter, r *http.Request) {
 	if err := kvmTemplate.Execute(w, kvmPage{UstreamerURL: USTREAMER_URL}); err != nil {
@@ -53,18 +59,35 @@ func handleSnapshot(w http.ResponseWriter, r *http.Request) {
 	io.Copy(w, resp.Body)
 }
 
+
+
 func main() {
 	fmt.Println("Starting Simple KVM")
 
-	http.HandleFunc("/keystroke", handleKeyStroke)
+	mux := http.NewServeMux()
 
-	http.HandleFunc("/", serveIndex)
+	// Login Logout
+	mux.HandleFunc("GET /login", loginPage)
+	mux.HandleFunc("POST /login", login)
+	mux.HandleFunc("POST /logout", logout)
 
-	http.Handle("/static/", http.StripPrefix("/static/",
-    	http.FileServer(http.Dir("static"))))
+	// Index
+	mux.HandleFunc("/", requireAuth(serveIndex))
 
-	http.HandleFunc("/snapshot", handleSnapshot)
+	// Keystrokes
+	mux.HandleFunc("/keystroke", requireAuth(handleKeyStroke))
+
+	// Stream proxy
+	target, _ := url.Parse(os.Getenv("USTREAMER_URL"))
+	proxy := httputil.NewSingleHostReverseProxy(target)
+	mux.Handle("/stream", requireAuth(proxy.ServeHTTP))
+
+	// Screenshots proxy
+	mux.HandleFunc("/snapshot", requireAuth(handleSnapshot))
+
+	// Serve static files
+	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
 	fmt.Println("Listening on 0.0.0.0:8090")
-	log.Fatal(http.ListenAndServe(":8090", nil))
+	log.Fatal(http.ListenAndServe(":8090", mux))
 }

@@ -16,11 +16,12 @@
 		<div class="actions">
 			<button id="kbtn">Keyboard</button>
 			<button id="dlbtn">Screenshot</button>
+            <form method="POST" action="/logout"><button>Log out</button></form>
 		</div>
     </header>
 
     <main>
-        <img id="screen" src="{{.UstreamerURL}}/stream" alt="console">
+        <img id="screen" src="/stream" alt="console">
     </main>
 
     <input id="kbin" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false">

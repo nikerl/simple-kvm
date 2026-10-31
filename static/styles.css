@@ -90,6 +90,81 @@ main {
 }
 
 
+
+
+body.login-page {
+  align-items: center;
+  justify-content: center;
+}
+
+.login-container {
+  width: 100%;
+  max-width: 560px;
+  padding: 32px 36px;
+  text-align: center;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+}
+
+.login-container h1 {
+  justify-content: center;
+  margin-bottom: 28px;
+}
+
+.login-container form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: end;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+}
+
+label {
+  font-size: 0.85rem;
+  color: #8b93a7;
+}
+
+input[type="text"],
+input[type="password"] {
+  width: 100%;
+  padding: 10px 12px;
+  font: inherit;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.login-container button {
+  grid-column: 1 / -1;
+  justify-self: center;
+  margin-top: 8px;
+  padding: 10px 40px;
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+
+.login-container button:hover { filter: brightness(1.1); }
+
+
+
+
 /* Hidden but still focusable (display:none would break focus on mobile) */
 #kbin {
   position: fixed;
