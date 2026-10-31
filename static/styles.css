@@ -81,6 +81,8 @@ main {
   width: auto;
   max-width: 100%;
   object-fit: contain;
+  pointer-events: none;
+  user-select: none;
   background: #000;
   border: 1px solid var(--border);
   border-radius: 6px;
