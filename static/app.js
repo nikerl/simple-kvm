@@ -64,7 +64,22 @@ kbin.addEventListener('input', onInput);
 kbin.addEventListener('compositionstart', () => { composing = true; });
 kbin.addEventListener('compositionend', () => { composing = false; reset(); });
 
+
+// Show keyboard button
 document.getElementById('kbtn').addEventListener('click', () => {
     reset();
     kbin.focus();
 });
+
+// Screenshot button
+document.getElementById('dlbtn').onclick = async () => {
+    const url = '/snapshot'; // same-origin URL of the image
+    const res = await fetch(url, { cache: 'no-store' });
+    if (!res.ok) return alert('Download failed: ' + res.status);
+    const blob = await res.blob();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `screenshot-${new Date().toISOString().replace(/[:.]/g, '-')}.jpg`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+};

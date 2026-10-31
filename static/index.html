@@ -13,11 +13,14 @@
 <body>
     <header>
         <h1><img src="/static/assets/favicon.png" alt="" class="logo">Simple KVM</h1>
-        <button id="kbtn">Keyboard</button>
+		<div class="actions">
+			<button id="kbtn">Keyboard</button>
+			<button id="dlbtn">Screenshot</button>
+		</div>
     </header>
 
     <main>
-        <img id="screen" src="{{.UstreamerURL}}" alt="console">
+        <img id="screen" src="{{.UstreamerURL}}/stream" alt="console">
     </main>
 
     <input id="kbin" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false">

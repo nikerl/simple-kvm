@@ -2,13 +2,14 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"html/template"
 	"log"
 	"net/http"
 	"github.com/gorilla/websocket"
 )
 
-const USTREAMER_URL = "http://192.168.0.30:8080/stream"
+const USTREAMER_URL = "http://192.168.0.30:8080"
 
 var kvmTemplate = template.Must(template.ParseFiles("static/index.html"))
 
@@ -41,15 +42,28 @@ func handleKeyStroke(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func handleSnapshot(w http.ResponseWriter, r *http.Request) {
+	resp, err := http.Get(USTREAMER_URL + "/snapshot")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadGateway)
+		return
+	}
+	defer resp.Body.Close()
+	w.Header().Set("Content-Type", resp.Header.Get("Content-Type"))
+	io.Copy(w, resp.Body)
+}
+
 func main() {
 	fmt.Println("Starting Simple KVM")
 
 	http.HandleFunc("/keystroke", handleKeyStroke)
 
 	http.HandleFunc("/", serveIndex)
-	
+
 	http.Handle("/static/", http.StripPrefix("/static/",
     	http.FileServer(http.Dir("static"))))
+
+	http.HandleFunc("/snapshot", handleSnapshot)
 
 	fmt.Println("Listening on 0.0.0.0:8090")
 	log.Fatal(http.ListenAndServe(":8090", nil))
