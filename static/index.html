@@ -6,10 +6,22 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Simple KVM</title>
 	<script>
-		document.addEventListener('keydown', (e) => {
-			fetch('/keystroke', { method: 'POST', body: e.key, keepalive: true });
+		const ws = new WebSocket(`ws://${location.host}/keystroke`);
+
+		function send(type, e) {
+			if (ws.readyState !== WebSocket.OPEN) return;
+			ws.send(type + ':' + e.code);
+			e.preventDefault();
+		}
+
+		document.addEventListener('keydown', (e) => { if (!e.repeat) send('down', e); });
+		document.addEventListener('keyup', (e) => send('up', e));
+
+		// If the tab loses focus mid-keypress, the keyup never arrives
+		window.addEventListener('blur', () => {
+			if (ws.readyState === WebSocket.OPEN) ws.send('release_all');
 		});
-	</script>
+</script>
 </head>
 
 <body>
