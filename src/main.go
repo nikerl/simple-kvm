@@ -38,6 +38,13 @@ func handleKeyStroke(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer conn.Close()
+	conn.SetReadLimit(512)
+
+	// Unblock ReadMessage when the session dies
+	go func() {
+		<-r.Context().Done()
+		conn.Close()
+	}()
 
 	for {
 		_, msg, err := conn.ReadMessage()

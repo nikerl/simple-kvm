@@ -136,7 +136,33 @@ func requireAuth(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		// Else continiue
-		next(w, r.WithContext(context.WithValue(r.Context(), ctxKey{}, s.username)))
+		// Context that is cancelled when the session dies or the handler returns
+		ctx, cancel := context.WithCancel(context.WithValue(r.Context(), ctxKey{}, s.username))
+		defer cancel()
+
+		go func() {
+			t := time.NewTicker(5 * time.Second)
+			defer t.Stop()
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case <-t.C:
+					if !sessionValid(c.Value) {
+						cancel()
+						return
+					}
+				}
+			}
+		}()
+
+		next(w, r.WithContext(ctx))
 	}
+}
+
+func sessionValid(token string) bool {
+	mu.Lock()
+	defer mu.Unlock()
+	s, ok := sessions[token]
+	return ok && time.Now().Before(s.expires)
 }
