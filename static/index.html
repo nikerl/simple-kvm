@@ -2,21 +2,25 @@
 <html lang="en">
 
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Simple KVM</title>
-	<script src="/static/app.js" defer></script>
-	<link rel="stylesheet" href="/static/styles.css">
-	<link rel="shortcut icon" href="/static/assets/favicon.png" type="image/x-icon">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple KVM</title>
+    <script src="/static/app.js" defer></script>
+    <link rel="stylesheet" href="/static/styles.css">
+    <link rel="shortcut icon" href="/static/assets/favicon.png" type="image/x-icon">
 </head>
 
 <body>
-    <h1>IP-KVM</h1>
+    <header>
+        <h1><img src="/static/assets/favicon.png" alt="" class="logo">Simple KVM</h1>
+        <button id="kbtn">Keyboard</button>
+    </header>
 
-	<button id="kbtn">Keyboard</button>
-	<input id="kbin" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false">
-    
-    <img src="{{.UstreamerURL}}" alt="NAS console" style="max-width:100%">
+    <main>
+        <img id="screen" src="{{.UstreamerURL}}" alt="console">
+    </main>
+
+    <input id="kbin" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false">
 </body>
 
 </html>
