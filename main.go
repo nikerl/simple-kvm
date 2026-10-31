@@ -47,6 +47,9 @@ func main() {
 	http.HandleFunc("/keystroke", handleKeyStroke)
 
 	http.HandleFunc("/", serveIndex)
+	
+	http.Handle("/static/", http.StripPrefix("/static/",
+    	http.FileServer(http.Dir("static"))))
 
 	fmt.Println("Listening on 0.0.0.0:8090")
 	log.Fatal(http.ListenAndServe(":8090", nil))

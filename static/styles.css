@@ -1,0 +1,17 @@
+#kbin {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100px;
+    height: 30px;
+    opacity: 0.01;
+    font-size: 16px;
+}
+
+
+@media screen and (min-width: 600px) {
+    /* Hide keyboard button on desktop */
+    #kbtn {
+        display: none;
+    }
+}
