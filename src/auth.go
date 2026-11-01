@@ -62,7 +62,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 
 	// If not, throw error
 	if !username_ok || err != nil {
-		logInfo("Failed login by user: " + username)
+		logInfo("Failed login by user: " + username + ", IP: " + r.Header.Get("X-Real-IP"))
 		loginMessage = "Invalid credentials"
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
@@ -90,7 +90,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 		SameSite: http.SameSiteLaxMode,
 	})
 
-	logInfo(" Login by user: " + username)
+	logInfo("Login by user: " + username + ", IP: " + r.Header.Get("X-Real-IP"))
 	loginMessage = ""
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
