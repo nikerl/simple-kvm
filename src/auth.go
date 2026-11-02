@@ -23,15 +23,13 @@ type loginPageData struct {
 
 type session struct {
 	username string
+	userIP   string
 	expires  time.Time
 }
 
-var (
-	users    = map[string][]byte{} // username -> bcrypt hash (use a DB in real code)
-	dummy, _ = bcrypt.GenerateFromPassword([]byte("dummy"), bcrypt.DefaultCost)
-	sessions = map[string]session{} // token -> session (use Redis/DB in real code)
-	mu       sync.Mutex
-)
+var sessions = map[string]session{} // token -> session
+var sessionMutex sync.Mutex // mutex for sessions list
+
 
 type ctxKey struct{}
 
@@ -49,7 +47,7 @@ func newToken() (string, error) {
 
 func login(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, 1<<10)
-	username, password := r.PostFormValue("username"), r.PostFormValue("password")
+	username, password, userIP := r.PostFormValue("username"), r.PostFormValue("password"), r.Header.Get("X-Real-IP")
 
 	// Check if username matches
 	username_ok := true
@@ -57,12 +55,23 @@ func login(w http.ResponseWriter, r *http.Request) {
 		username_ok = false
 	}
 
+
+	// if the user is already signed in somewhere else, invalidate the old session
+	for token, s := range sessions {
+		if username == s.username {
+			logInfo("Invalidate old session for user: " + username + ", IP: " + s.userIP)
+			sessionMutex.Lock()
+			delete(sessions, token)
+			sessionMutex.Unlock()
+		}
+	}
+
 	// Check if password matches
 	err := bcrypt.CompareHashAndPassword([]byte(os.Getenv("ADMIN_PASSWORD_HASH")), []byte(password))
 
 	// If not, throw error
 	if !username_ok || err != nil {
-		logInfo("Failed login by user: " + username + ", IP: " + r.Header.Get("X-Real-IP"))
+		logInfo("Failed login by user: " + username + ", IP: " + userIP)
 		loginMessage = "Invalid credentials"
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
@@ -75,9 +84,9 @@ func login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	exp := time.Now().Add(1 * time.Hour)
-	mu.Lock()
-	sessions[token] = session{username, exp}
-	mu.Unlock()
+	sessionMutex.Lock()
+	sessions[token] = session{username, userIP, exp}
+	sessionMutex.Unlock()
 
 	// Set the new cookie in the broswer
 	http.SetCookie(w, &http.Cookie{
@@ -90,7 +99,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 		SameSite: http.SameSiteLaxMode,
 	})
 
-	logInfo("Login by user: " + username + ", IP: " + r.Header.Get("X-Real-IP"))
+	logInfo("Login by user: " + username + ", IP: " + userIP)
 	loginMessage = ""
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
@@ -103,9 +112,9 @@ func loginPage(w http.ResponseWriter, r *http.Request) {
 
 func logout(w http.ResponseWriter, r *http.Request) {
 	if c, err := r.Cookie("simple_kvm_token"); err == nil {
-		mu.Lock()
+		sessionMutex.Lock()
 		delete(sessions, c.Value)
-		mu.Unlock()
+		sessionMutex.Unlock()
 	}
 	http.SetCookie(w, &http.Cookie{Name: "simple_kvm_token", Path: "/", MaxAge: -1, HttpOnly: true, Secure: true})
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
@@ -122,13 +131,13 @@ func requireAuth(next http.HandlerFunc) http.HandlerFunc {
 		}
 
 		// Check if token is correct
-		mu.Lock()
+		sessionMutex.Lock()
 		s, ok := sessions[c.Value]
 		if ok && time.Now().After(s.expires) {
 			delete(sessions, c.Value)
 			ok = false
 		}
-		mu.Unlock()
+		sessionMutex.Unlock()
 
 		// If not, redirect to /login
 		if !ok {
@@ -140,8 +149,9 @@ func requireAuth(next http.HandlerFunc) http.HandlerFunc {
 		ctx, cancel := context.WithCancel(context.WithValue(r.Context(), ctxKey{}, s.username))
 		defer cancel()
 
+		// Check if session is still valid every second
 		go func() {
-			t := time.NewTicker(5 * time.Second)
+			t := time.NewTicker(time.Second)
 			defer t.Stop()
 			for {
 				select {
@@ -161,8 +171,8 @@ func requireAuth(next http.HandlerFunc) http.HandlerFunc {
 }
 
 func sessionValid(token string) bool {
-	mu.Lock()
-	defer mu.Unlock()
+	sessionMutex.Lock()
+	defer sessionMutex.Unlock()
 	s, ok := sessions[token]
 	return ok && time.Now().Before(s.expires)
 }
