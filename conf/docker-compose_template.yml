@@ -1,0 +1,35 @@
+services:
+  simple-kvm:
+    container_name: simple-kvm
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8090:8090"
+    devices:
+      - /dev/hidg0:/dev/hidg0
+    environment:
+      USTREAMER_URL: 'http://ustreamer:8080'
+      ADMIN_USERNAME: '<admin_username>'
+      ADMIN_PASSWORD_HASH: '<bcrypt_hash_of_admin_password>'
+    depends_on:
+      - ustreamer
+    restart: unless-stopped
+
+  ustreamer:
+    image: pikvm/ustreamer:latest
+    container_name: ustreamer
+    restart: unless-stopped
+    devices:
+      - /dev/video0:/dev/video0
+    environment:
+      EDID: ""
+    command:
+      - --device=/dev/video0
+      - --format=mjpeg
+      - --resolution=1920x1080
+      - --desired-fps=60
+      - --persistent
+      - --drop-same-frames=30
+      - --encoder=cpu
+      - --quality=80
