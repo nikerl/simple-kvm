@@ -57,4 +57,4 @@ docker compose up -d
 ```
 
 ## Security
-NEVER expose this IP KVM to the internet, always use it behind a VPN.
+NEVER expose this IP KVM to the internet, always use it behind a VPN. The included auth is there to prevent someone on your network from stubling onto the KVM and messing with things. It is not designed or tested for being exposed to the internet. 
