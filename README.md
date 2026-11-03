@@ -49,7 +49,7 @@ cd simple-kvm
 cp conf/docker-compose_template.yml ./docker-compose.yml
 ```
 
-Enter the username and password hash for the admin account in the docker compose file. The password hash can be generated [here, for example](https://bcrypt-generator.com/).
+Enter the username and password hash for the admin account in the docker compose file. The password hash can be generated [here, for example](https://bcrypt-generator.com/). Note the dollar signs in the password hash need to be doubled to work: `$ -> $$`
 
 Finally build and run the compose stack:
 ```bash
