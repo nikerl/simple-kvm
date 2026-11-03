@@ -7,8 +7,9 @@ WORKDIR /src
 COPY go.mod go.sum ./
 RUN go mod download
 
-COPY . .
-RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/simple-kvm ./src
+COPY src ./src
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/simple-kvm ./src
 
 # ---- Runtime stage ----
 FROM alpine:3.20
