@@ -1,0 +1,11 @@
+[Unit]
+Description=USB HID keyboard gadget
+After=sysinit.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/bin/kvm-gadget.sh
+
+[Install]
+WantedBy=multi-user.target
