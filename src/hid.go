@@ -10,9 +10,9 @@ var hidState = [8]byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
 func applyModifier(modifier byte, event string) {
 	switch event {
 	case "down":
-		hidState[0] += modifier
+		hidState[0] |= modifier
 	case "up":
-		hidState[0] -= modifier
+		hidState[0] &^= modifier
 	}
 }
 
@@ -20,6 +20,9 @@ func applyKey(key byte, event string) {
 	for i := 2; i < 8; i++ {
 		switch event {
 		case "down":
+			if hidState[i] == key {
+				return
+			}
 			if hidState[i] == 0 {
 				hidState[i] = key
 				return
@@ -39,7 +42,8 @@ func sendKeystrokesToServer(keystroke string, hidg *os.File) {
 	// Release all keys
 	if len(split) == 1 && split[0] == "release_all" {
 		// Write the zeros to hidg to release all keys
-		hidg.Write([]byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00})
+		hidState = [8]byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+		hidg.Write(hidState[:])
 		return
 	}
 

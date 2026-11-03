@@ -46,6 +46,7 @@ func recordKeystroke(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("hidg:", err)
 		return
 	}
+	defer hidg.Write([]byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00})
 
 
 	// Unblock ReadMessage when the session dies
