@@ -31,7 +31,7 @@ func serveIndex(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func handleKeyStroke(w http.ResponseWriter, r *http.Request) {
+func recordKeystroke(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println("upgrade:", err)
@@ -39,6 +39,14 @@ func handleKeyStroke(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 	conn.SetReadLimit(512)
+
+	// open hidg file
+	hidg, err := os.OpenFile("/dev/hidg0", os.O_WRONLY, 0)
+	if err != nil {
+		fmt.Println("hidg:", err)
+		return
+	}
+
 
 	// Unblock ReadMessage when the session dies
 	go func() {
@@ -51,7 +59,7 @@ func handleKeyStroke(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			return
 		}
-		fmt.Println(string(msg)) // e.g. "down:KeyA" / "up:KeyA"
+		sendKeystrokesToServer(string(msg), hidg)
 	}
 }
 
@@ -82,7 +90,7 @@ func main() {
 	mux.HandleFunc("/", requireAuth(serveIndex))
 
 	// Keystrokes
-	mux.HandleFunc("/keystroke", requireAuth(handleKeyStroke))
+	mux.HandleFunc("/keystroke", requireAuth(recordKeystroke))
 
 	// Stream proxy
 	target, _ := url.Parse(os.Getenv("USTREAMER_URL"))
