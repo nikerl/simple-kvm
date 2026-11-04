@@ -28,7 +28,10 @@ const send = (m) => {
 const PASS = /^(Enter|Tab|Escape|Arrow\w+|F\d+|Home|End|PageUp|PageDown|Delete|Insert)$/;
 
 document.addEventListener('keydown', (e) => {
-    if (!e.code) return;                                   // Android "Unidentified" noise
+    if (!e.code) {                                         // Android "Unidentified" noise
+        if (e.target === kbin && e.key === 'Enter') send('swkb:key:Enter');
+        return;
+    }
     if (e.target === kbin && !PASS.test(e.code)) return;   // let the diff handle it
     if (!e.repeat) send('hwkb:' + e.code + ':down');
     e.preventDefault();
@@ -53,9 +56,9 @@ function onInput() {
     const cur = kbin.value;
     let i = 0;
     while (i < prev.length && i < cur.length && prev[i] === cur[i]) i++;
-    for (let n = prev.length - i; n > 0; n--) send('swkb:Backspace');
+    for (let n = prev.length - i; n > 0; n--) send('swkb:key:Backspace');
     const added = cur.slice(i);
-    if (added) send('swkb:' + added);
+    if (added) send('swkb:text:' + added);
     prev = cur;
     if (!composing) reset();
 }

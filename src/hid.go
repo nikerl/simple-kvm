@@ -37,21 +37,22 @@ func applyKey(key byte, event string) {
 }
 
 func sendKeystrokesToServer(keystroke string, hidg *os.File) {
-	var split = strings.Split(keystroke, ":")
-
 	// Release all keys
-	if len(split) == 1 && split[0] == "release_all" {
+	if keystroke == "release_all" {
 		// Write the zeros to hidg to release all keys
 		hidState = [8]byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
 		hidg.Write(hidState[:])
 		return
 	}
 
-	var kbtype = split[0]
-	var keyName = split[1]
-	
-	switch kbtype {
-	case "hwkb":
+	// Hardware keyboard: "hwkb:key:event"
+	if strings.HasPrefix(keystroke, "hwkb:") {
+		var split = strings.Split(keystroke, ":")
+		if len(split) < 3 {
+			return
+		}
+
+		var keyName = split[1]
 		var event = split[2]
 
 		// if keyName is found in the keyMap its a normal key
@@ -68,15 +69,160 @@ func sendKeystrokesToServer(keystroke string, hidg *os.File) {
 				return
 			}
 		}
+	}
 
-	case "swkb":
-		// TODO: Mobile support not implemented yet
+	// Software keyboard: "swkb:text:<chars>" or "swkb:key:<KeyboardEvent.code>".
+	// The payload may itself contain ':' so it is split separately.
+	if strings.HasPrefix(keystroke, "swkb:") {
+		parts := strings.SplitN(keystroke, ":", 3)
+		if len(parts) == 3 {
+			switch parts[1] {
+			case "text":
+				for _, r := range parts[2] {
+					typeRune(r, hidg)
+				}
+			case "key":
+				tapKey(parts[2], 0, hidg)
+			}
+		}
+		return
 	}
 
 	// Write the state to the hidg
 	hidg.Write(hidState[:])
 }
 
+
+// Layout of the machine being controlled. HID sends physical key positions, so
+// this must match the layout configured on the target: "sv" or "us".
+const keyboardLayout = "sv"
+
+// Press and release a key by KeyboardEvent.code with extra modifiers (bits of
+// byte 0) held. Modifiers already held (e.g. a latched Ctrl) are left untouched
+// and everything we added is released afterwards.
+func tapKey(code string, mods byte, hidg *os.File) {
+	keyCode, ok := keyMap[code]
+	if !ok {
+		return
+	}
+	prevMods := hidState[0]
+
+	// Modifiers go out in their own report first (and are released last) so
+	// hosts never see the key arrive before the modifier.
+	if hidState[0]|mods != hidState[0] {
+		hidState[0] |= mods
+		hidg.Write(hidState[:])
+	}
+	applyKey(keyCode, "down")
+	hidg.Write(hidState[:])
+
+	applyKey(keyCode, "up")
+	hidg.Write(hidState[:])
+	if hidState[0] != prevMods {
+		hidState[0] = prevMods
+		hidg.Write(hidState[:])
+	}
+}
+
+// Type a single character using the configured layout. Unmappable characters
+// are ignored.
+func typeRune(r rune, hidg *os.File) {
+	switch {
+	case r >= 'a' && r <= 'z':
+		tapKey("Key"+string(r-32), 0, hidg)
+		return
+	case r >= 'A' && r <= 'Z':
+		tapKey("Key"+string(r), modifierMap["ShiftLeft"], hidg)
+		return
+	case r >= '0' && r <= '9':
+		tapKey("Digit"+string(r), 0, hidg)
+		return
+	}
+	k, ok := layouts[keyboardLayout][r]
+	if !ok {
+		return
+	}
+	var mods byte
+	if k.shift {
+		mods |= modifierMap["ShiftLeft"]
+	}
+	if k.altgr {
+		mods |= modifierMap["AltRight"]
+	}
+	tapKey(k.code, mods, hidg)
+	if k.dead {
+		// Dead key: a following space makes the accent appear on its own
+		tapKey("Space", 0, hidg)
+	}
+}
+
+type runeKey struct {
+	code  string
+	shift bool
+	altgr bool
+	dead  bool // dead key, needs a space after it to produce the character
+}
+
+// Non-alphanumeric characters per layout (letters and digits are handled in
+// typeRune, they sit on the same keys in both).
+var layouts = map[string]map[rune]runeKey{
+	"us": {
+		' ': {code: "Space"}, '\n': {code: "Enter"}, '\t': {code: "Tab"},
+		'`': {code: "Backquote"}, '~': {code: "Backquote", shift: true},
+		'-': {code: "Minus"}, '_': {code: "Minus", shift: true},
+		'=': {code: "Equal"}, '+': {code: "Equal", shift: true},
+		'[': {code: "BracketLeft"}, '{': {code: "BracketLeft", shift: true},
+		']': {code: "BracketRight"}, '}': {code: "BracketRight", shift: true},
+		'\\': {code: "Backslash"}, '|': {code: "Backslash", shift: true},
+		';': {code: "Semicolon"}, ':': {code: "Semicolon", shift: true},
+		'\'': {code: "Quote"}, '"': {code: "Quote", shift: true},
+		',': {code: "Comma"}, '<': {code: "Comma", shift: true},
+		'.': {code: "Period"}, '>': {code: "Period", shift: true},
+		'/': {code: "Slash"}, '?': {code: "Slash", shift: true},
+		'!': {code: "Digit1", shift: true}, '@': {code: "Digit2", shift: true},
+		'#': {code: "Digit3", shift: true}, '$': {code: "Digit4", shift: true},
+		'%': {code: "Digit5", shift: true}, '^': {code: "Digit6", shift: true},
+		'&': {code: "Digit7", shift: true}, '*': {code: "Digit8", shift: true},
+		'(': {code: "Digit9", shift: true}, ')': {code: "Digit0", shift: true},
+	},
+
+	// Swedish ISO. AltGr is the right Alt key.
+	"sv": {
+		' ': {code: "Space"}, '\n': {code: "Enter"}, '\t': {code: "Tab"},
+		'§': {code: "Backquote"}, '½': {code: "Backquote", shift: true},
+
+		'!': {code: "Digit1", shift: true},
+		'"': {code: "Digit2", shift: true}, '@': {code: "Digit2", altgr: true},
+		'#': {code: "Digit3", shift: true}, '£': {code: "Digit3", altgr: true},
+		'¤': {code: "Digit4", shift: true}, '$': {code: "Digit4", altgr: true},
+		'%': {code: "Digit5", shift: true}, '€': {code: "Digit5", altgr: true},
+		'&': {code: "Digit6", shift: true},
+		'/': {code: "Digit7", shift: true}, '{': {code: "Digit7", altgr: true},
+		'(': {code: "Digit8", shift: true}, '[': {code: "Digit8", altgr: true},
+		')': {code: "Digit9", shift: true}, ']': {code: "Digit9", altgr: true},
+		'=': {code: "Digit0", shift: true}, '}': {code: "Digit0", altgr: true},
+
+		'+': {code: "Minus"}, '?': {code: "Minus", shift: true},
+		'\\': {code: "Minus", altgr: true},
+		'´': {code: "Equal", dead: true}, '`': {code: "Equal", shift: true, dead: true},
+
+		'å': {code: "BracketLeft"}, 'Å': {code: "BracketLeft", shift: true},
+		'¨': {code: "BracketRight", dead: true},
+		'^': {code: "BracketRight", shift: true, dead: true},
+		'~': {code: "BracketRight", altgr: true, dead: true},
+
+		'ö': {code: "Semicolon"}, 'Ö': {code: "Semicolon", shift: true},
+		'ä': {code: "Quote"}, 'Ä': {code: "Quote", shift: true},
+		'\'': {code: "Backslash"}, '*': {code: "Backslash", shift: true},
+
+		'<': {code: "IntlBackslash"}, '>': {code: "IntlBackslash", shift: true},
+		'|': {code: "IntlBackslash", altgr: true},
+
+		',': {code: "Comma"}, ';': {code: "Comma", shift: true},
+		'.': {code: "Period"}, ':': {code: "Period", shift: true},
+		'-': {code: "Slash"}, '_': {code: "Slash", shift: true},
+	},
+}
 
 // KeyboardEvent.code -> HID code (usage page 0x07).
 // Regular keys: usage ID for one of the six key slots (bytes 2-7).
