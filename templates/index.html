@@ -14,17 +14,26 @@
     <header>
         <h1><img src="/static/assets/favicon.png" alt="" class="logo">Simple KVM</h1>
 		<div class="actions">
-			<button id="kbtn">Keyboard</button>
 			<button id="dlbtn">Screenshot</button>
             <form method="POST" action="/logout"><button>Log out</button></form>
 		</div>
     </header>
 
     <main>
-        <img id="screen" src="/stream" alt="console">
+        <div id="frame"><img id="screen" src="/stream" alt="console"></div>
     </main>
 
-    <input id="kbin" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false">
+    <div id="keybar">
+        <button id="kbtn" aria-label="Show keyboard">&#x2328;&#xFE0E;</button>
+        <button data-key="ControlLeft" data-toggle>Ctrl</button>
+        <span class="spacer"></span>
+        <button data-key="ArrowLeft">&larr;</button>
+        <button data-key="ArrowUp">&uarr;</button>
+        <button data-key="ArrowDown">&darr;</button>
+        <button data-key="ArrowRight">&rarr;</button>
+    </div>
+
+    <input id="kbin" type="password" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" enterkeyhint="enter" data-lpignore="true" data-1p-ignore>
 </body>
 
 </html>

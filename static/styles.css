@@ -75,6 +75,8 @@ main {
   padding: 16px;
 }
 
+#frame { display: contents; }
+
 #screen {
   display: block;
   height: 100%;
@@ -83,7 +85,7 @@ main {
   object-fit: contain;
   pointer-events: none;
   user-select: none;
-  background: #000;
+  background: #070707;
   border: 1px solid var(--border);
   border-radius: 6px;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
@@ -168,7 +170,7 @@ input[type="password"]:focus {
 /* Hidden but still focusable (display:none would break focus on mobile) */
 #kbin {
   position: fixed;
-  bottom: 0;
+  top: 0;
   left: 0;
   width: 1px;
   height: 1px;
@@ -180,8 +182,87 @@ input[type="password"]:focus {
 
 
 @media screen and (min-width: 600px) {
+    #keybar { display: none; }
     /* Hide keyboard button on desktop */
     #kbtn {
         display: none;
+    }
+}
+
+@media screen and (max-width: 599px) {
+    /* Lock the page to the visual viewport (height is set from JS so it
+       shrinks when the on-screen keyboard opens) */
+    html, body {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: var(--vvh, 100%);
+        overflow: hidden;
+        overscroll-behavior: none;
+    }
+
+    #keybar {
+        display: flex;
+        gap: 6px;
+        padding: 6px 8px;
+        background: var(--panel);
+        border-top: 1px solid var(--border);
+    }
+
+    #keybar .spacer { flex: 1; }
+
+    #keybar button {
+        min-width: 48px;
+        padding: 10px 14px;
+        font-size: 1rem;
+        touch-action: manipulation;
+        user-select: none;
+        -webkit-user-select: none;
+    }
+
+    header { padding: 8px 12px; }
+    h1 { font-size: 1.15rem; }
+
+    main {
+        display: block;
+        padding: 8px;
+    }
+
+    /* The frame stays fixed; the zoomed stream scrolls inside it */
+    #frame {
+        display: block;
+        height: 100%;
+        overflow: auto;
+        -webkit-overflow-scrolling: touch;
+        background: #000;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+    }
+
+    #screen {
+        /* Fixed zoom: based on the largest possible viewport (lvh), so it doesn't
+           change when the keyboard opens or the browser nav bar collapses.
+           The frame shrinks instead and scrolls the stream vertically. */
+        height: calc(100lvh - var(--chrome, 70px));
+        width: auto;
+        min-width: 100%;
+        max-width: none;
+        object-fit: cover;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+    }
+}
+
+@media screen and (max-width: 599px) {
+    .login-container {
+        padding: 24px 20px;
+        margin: 0 12px;
+    }
+
+    .login-container form {
+        grid-template-columns: 1fr;
     }
 }

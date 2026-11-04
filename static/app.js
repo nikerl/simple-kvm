@@ -68,7 +68,7 @@ kbin.addEventListener('compositionend', () => { composing = false; reset(); });
 // Show keyboard button
 document.getElementById('kbtn').addEventListener('click', () => {
     reset();
-    kbin.focus();
+    kbin.focus({ preventScroll: true });
 });
 
 // Screenshot button
@@ -83,3 +83,67 @@ document.getElementById('dlbtn').onclick = async () => {
     a.click();
     URL.revokeObjectURL(a.href);
 };
+
+
+// Mobile: size the page to the visual viewport so the stream fills the space above the keyboard
+const mobile = window.matchMedia('(max-width: 599px)');
+if (window.visualViewport) {
+    const fit = () => {
+        document.documentElement.style.setProperty('--vvh', window.visualViewport.height + 'px');
+        window.scrollTo(0, 0);
+    };
+    window.visualViewport.addEventListener('resize', fit);
+    window.visualViewport.addEventListener('scroll', fit);
+    fit();
+}
+
+// Mobile: open the keyboard by default. Browsers usually require a user gesture,
+// so try immediately and again on the first touch.
+if (mobile.matches) {
+    const open = () => { reset(); kbin.focus({ preventScroll: true }); };
+    open();
+    // Browsers only show the keyboard from a real tap, so retry on the first gesture
+    const onGesture = () => {
+        if (document.activeElement !== kbin) open();
+        ['touchend', 'pointerup', 'click'].forEach((t) => document.removeEventListener(t, onGesture, true));
+    };
+    ['touchend', 'pointerup', 'click'].forEach((t) => document.addEventListener(t, onGesture, true));
+}
+
+
+// Header + main padding + frame border: the fixed (non-stream) part of the page height
+const setChrome = () => {
+    const bar = document.getElementById('keybar');
+    const h = document.querySelector('header').offsetHeight + (bar.offsetParent ? bar.offsetHeight : 0);
+    document.documentElement.style.setProperty('--chrome', (h + 16 + 2) + 'px');
+};
+setChrome();
+window.addEventListener('resize', setChrome);
+
+
+
+// Mobile key bar (Ctrl latch + arrows). Buttons never take focus, so the keyboard stays open.
+document.querySelectorAll('#keybar button[data-key]').forEach((btn) => {
+    const code = btn.dataset.key;
+    const toggle = 'toggle' in btn.dataset;
+    btn.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        if (toggle) {
+            const on = btn.classList.toggle('active');
+            send('hwkb:' + code + ':' + (on ? 'down' : 'up'));
+        } else {
+            btn.setPointerCapture(e.pointerId);
+            send('hwkb:' + code + ':down');
+        }
+    });
+    if (!toggle) {
+        const up = () => send('hwkb:' + code + ':up');
+        btn.addEventListener('pointerup', up);
+        btn.addEventListener('pointercancel', up);
+    }
+    btn.addEventListener('mousedown', (e) => e.preventDefault());
+});
+
+window.addEventListener('blur', () => {
+    document.querySelectorAll('#keybar button.active').forEach((b) => b.classList.remove('active'));
+});
