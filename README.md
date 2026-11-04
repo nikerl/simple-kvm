@@ -21,22 +21,18 @@ dtoverlay=dwc2,dr_mode=peripheral
 
 Check that a UDC exists: `ls /sys/class/udc` (shows fe980000.usb).
 
-Install and run the USB Gadget script
 ```bash
+# Install and run the USB Gadget script
 sudo cp conf/kvm-gadget.sh /usr/local/bin/
 sudo chmod +x /usr/local/bin/kvm-gadget.sh
 sudo bash -x /usr/local/bin/kvm-gadget.sh
-``` 
 
-Create a service that runs on startup to install the gadget
-```bash
+# Create a service that runs on startup to install the gadget
 sudo cp conf/kvm-gadget.service /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable --now kvm-gadget.service
-```
 
-Test the USB gadget to make sure it works
-```bash
+# Test the USB gadget to make sure it works
 printf '\0\0\x0b\0\0\0\0\0' > /dev/hidg0   # press h
 printf '\0\0\0\0\0\0\0\0'   > /dev/hidg0   # release
 ```
@@ -54,6 +50,17 @@ Enter the username and password hash for the admin account in the docker compose
 Finally build and run the compose stack:
 ```bash
 docker compose up -d
+```
+
+## Debugging
+If the program stops sending keystrokes to the server try to reset the HID device
+```bash
+# Reset the HID device
+echo "" | sudo tee /sys/kernel/config/usb_gadget/kvm/UDC
+echo fe980000.usb | sudo tee /sys/kernel/config/usb_gadget/kvm/UDC
+
+# Check the current state, should print "configured"
+cat /sys/class/udc/fe980000.usb/state
 ```
 
 ## Security
