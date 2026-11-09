@@ -33,6 +33,11 @@ const (
 	maxFailures    = 3                // failed writes while "configured" before rebinding
 	stuckTimeout   = 15 * time.Second // time in a half-enumerated state before rebinding
 	repairCooldown = 15 * time.Second
+
+	// "not attached" can mean the controller is wedged while the target is
+	// actually there, so rebind with backoff until it attaches again.
+	detachedRetryMin = 30 * time.Second
+	detachedRetryMax = 5 * time.Minute
 )
 
 // Boot-protocol keyboard: 1 modifier byte, 1 reserved, 5 LEDs (out), 6 keys.
@@ -54,6 +59,7 @@ type Gadget struct {
 	failures   int
 	lastRepair time.Time
 	lastErr    string
+	retryEvery time.Duration // current backoff for "not attached" rebinds
 }
 
 var gadget = &Gadget{}
@@ -319,6 +325,7 @@ func (g *Gadget) check() {
 	canRepair := time.Since(g.lastRepair) > repairCooldown
 	switch state {
 	case "configured":
+		g.retryEvery = detachedRetryMin
 		if g.failures >= maxFailures && canRepair {
 			log.Printf("gadget: %d failed writes while configured", g.failures)
 			g.repair()
@@ -329,9 +336,21 @@ func (g *Gadget) check() {
 			log.Printf("gadget: stuck in %q", state)
 			g.repair()
 		}
+	case "not attached":
+		// Usually the cable or target is off, but the dwc2 controller can also
+		// get stuck here while the target keeps trying to enumerate. A rebind
+		// is harmless when nothing is connected, so retry with backoff.
+		if g.retryEvery == 0 {
+			g.retryEvery = detachedRetryMin
+		}
+		if time.Since(g.stateSince) > detachedRetryMin && time.Since(g.lastRepair) > g.retryEvery {
+			log.Printf("gadget: not attached, rebinding in case the controller is stuck (next try in %s)", min(g.retryEvery*2, detachedRetryMax))
+			g.repair()
+			g.retryEvery = min(g.retryEvery*2, detachedRetryMax)
+		}
 	}
-	// "not attached" (cable/target off) and "suspended" (target asleep) are
-	// left alone: rebinding can't fix those.
+	// "suspended" (target asleep) is left alone: a rebind could wake the
+	// target or make it see the keyboard disconnect.
 
 	if g.f == nil {
 		err := g.reopen()
