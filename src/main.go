@@ -56,6 +56,9 @@ func recordKeystroke(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			return
 		}
+		if string(msg) == "ping" { // client keepalive
+			continue
+		}
 		sendKeystrokesToServer(string(msg), gadget)
 	}
 }

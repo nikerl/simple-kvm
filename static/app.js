@@ -1,19 +1,56 @@
 
 const kbin = document.getElementById('kbin');
 
-const ws = new WebSocket(
-    `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/keystroke`
-);
-ws.onopen = () => {
-    console.log('WebSocket connected');
+let ws;
+let reconnectTimer = null;
+
+const connect = () => {
+    ws = new WebSocket(
+        `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/keystroke`
+    );
+    ws.onopen = () => {
+        console.log('WebSocket connected');
+    };
+    ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+    };
+    ws.onclose = () => {
+        console.log('WebSocket disconnected');
+        scheduleReconnect(500);
+    };
 };
-ws.onerror = (error) => {
-    console.error('WebSocket error:', error);
+
+// Only show the sign-in overlay if the session is really gone. Otherwise
+// (idle timeout on a proxy, network blip, server restart) just reconnect.
+const scheduleReconnect = (delay) => {
+    clearTimeout(reconnectTimer);
+    reconnectTimer = setTimeout(async () => {
+        try {
+            const r = await fetch('/', { redirect: 'manual', cache: 'no-store' });
+            if (r.type === 'opaqueredirect' || r.status === 401 || r.status === 303) {
+                document.getElementById('overlay').style.display = 'flex';
+                return;
+            }
+            connect();
+        } catch (e) {
+            scheduleReconnect(Math.min(delay * 2, 5000));   // server unreachable, retry
+        }
+    }, delay);
 };
-ws.onclose = () => {
-    console.log('WebSocket disconnected');
-    document.getElementById('overlay').style.display = 'flex';
-};
+
+connect();
+
+// Keep the socket from being closed for inactivity by proxies/NAT
+setInterval(() => {
+    if (ws.readyState === WebSocket.OPEN) ws.send('ping');
+}, 20000);
+
+// Reconnect right away when the tab becomes visible again
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && ws.readyState !== WebSocket.OPEN && ws.readyState !== WebSocket.CONNECTING) {
+        scheduleReconnect(0);
+    }
+});
 
 const SENTINEL = ' ';
 
