@@ -1,4 +1,6 @@
-# Simple KVM
+# <img width="10000" height="660" alt="simple-kvm-banner" src="https://github.com/user-attachments/assets/ff01e9cf-1cf2-4810-99db-5ca9d00b2482" />
+
+
 Simple KVM is a very basic IP KVM for when PiKVM is overkill. Simple KVM has a simple but responsive UI that works well on both desktop and mobile. The following features are implemented:
 
 - Video ouptut
@@ -7,7 +9,7 @@ Simple KVM is a very basic IP KVM for when PiKVM is overkill. Simple KVM has a s
 - Screenshot button
 - Simple authentication and session management for one user
 
-<img width="2117" height="872" alt="kvm-image" src="https://github.com/user-attachments/assets/ba8703b4-9d27-4a95-b722-17af0cd70250" />
+<img width="2117" height="872" alt="kvm-image" src="https://github.com/user-attachments/assets/7806b4b9-fb73-443d-b8e9-c451692634c7" />
 
 
 ## Requirements
