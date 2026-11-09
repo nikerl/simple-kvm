@@ -12,6 +12,7 @@ ws.onerror = (error) => {
 };
 ws.onclose = () => {
     console.log('WebSocket disconnected');
+    document.getElementById('overlay').style.display = 'flex';
 };
 
 const SENTINEL = ' ';
