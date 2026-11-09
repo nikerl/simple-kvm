@@ -5,14 +5,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simple KVM</title>
-    <script src="/static/app.js" defer></script>
-    <link rel="stylesheet" href="/static/styles.css">
+    <script src="/static/app.js?v=2" defer></script>
+    <link rel="stylesheet" href="/static/styles.css?v=2">
     <link rel="shortcut icon" href="/static/assets/favicon.png" type="image/x-icon">
 </head>
 
 <body>
     <header>
-        <h1><img src="/static/assets/favicon.png" alt="" class="logo">Simple KVM<span id="hidstatus" class="status" title="Checking keyboard..."></span></h1>
+        <div class="brand">
+            <img src="/static/assets/logo.png" alt="" class="logo">
+            <span id="hidstatus" class="status" title="Checking keyboard..."></span>
+        </div>
 		<div class="actions">
 			<button id="dlbtn">Screenshot</button>
             <form method="POST" action="/logout"><button>Log out</button></form>
@@ -38,8 +41,8 @@
 
     <div id="overlay">
         <div class="login-container">
-            <h1><img src="/static/assets/favicon.png" alt="" class="logo">Simple KVM</h1>
-            <p>You've been signed out due to inactivity<br>or because you signed in on another device</p>
+            <img src="/static/assets/logo.png" alt="" class="logo">
+            <p>You've been signed out due to inactivity<br>or because you signed in on another device.</p>
             <form action="/login" method="GET">
                 <button type="submit">Sign in again</button>
             </form>

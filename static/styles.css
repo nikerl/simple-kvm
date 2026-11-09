@@ -30,6 +30,12 @@ header {
   border-bottom: 1px solid var(--border);
 }
 
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
 .actions {
   display: flex;
   gap: 8px;
@@ -47,18 +53,21 @@ h1 {
 
 /* Keyboard gadget status dot */
 .status {
+  display: inline-block;
   width: 0.6rem;
   height: 0.6rem;
+  flex: none;
   border-radius: 50%;
-  background: var(--border);
+  background: #8b93a7;
 }
 .status.ok    { background: #3fb950; }
 .status.warn  { background: #d29922; }
 .status.error { background: #f85149; }
 
 .logo {
-  width: 1.6rem;
   height: 1.6rem;
+  width: auto;
+  flex: none;
 }
 
 button {
@@ -126,6 +135,12 @@ body.login-page {
 .login-container h1 {
   justify-content: center;
   margin-bottom: 28px;
+}
+
+.login-container .logo {
+  display: block;
+  height: 2.2rem;
+  margin: 0 auto 28px;
 }
 
 .login-container form {
