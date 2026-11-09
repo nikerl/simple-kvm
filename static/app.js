@@ -151,3 +151,20 @@ document.querySelectorAll('#keybar button[data-key]').forEach((btn) => {
 window.addEventListener('blur', () => {
     document.querySelectorAll('#keybar button.active').forEach((b) => b.classList.remove('active'));
 });
+
+
+// Keyboard gadget status indicator
+const hidstatus = document.getElementById('hidstatus');
+async function pollStatus() {
+    try {
+        const res = await fetch('/status', { cache: 'no-store' });
+        const s = await res.json();
+        hidstatus.className = 'status ' + s.level;
+        hidstatus.title = s.message;
+    } catch {
+        hidstatus.className = 'status error';
+        hidstatus.title = 'KVM server unreachable';
+    }
+}
+pollStatus();
+setInterval(pollStatus, 3000);

@@ -6,8 +6,13 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8090:8090"
-    devices:
-      - /dev/hidg0:/dev/hidg0
+    # The app creates and maintains the USB HID gadget itself
+    volumes:
+      - /sys/kernel/config:/sys/kernel/config
+    # Allow opening /dev/hidg0. 236 is the hidg major number on Raspberry Pi OS,
+    # check with: grep hidg /proc/devices
+    device_cgroup_rules:
+      - 'c 236:* rwm'
     environment:
       USTREAMER_URL: 'http://ustreamer:8080'
       ADMIN_USERNAME: '<admin_username>'

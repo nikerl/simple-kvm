@@ -45,6 +45,17 @@ h1 {
   letter-spacing: 0.04em;
 }
 
+/* Keyboard gadget status dot */
+.status {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  background: var(--border);
+}
+.status.ok    { background: #3fb950; }
+.status.warn  { background: #d29922; }
+.status.error { background: #f85149; }
+
 .logo {
   width: 1.6rem;
   height: 1.6rem;

@@ -1,11 +1,15 @@
 package main
 
 import (
-	"os"
+	"io"
 	"strings"
+	"sync"
 )
 
 var hidState = [8]byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
+
+// hidState is shared by all websocket sessions
+var hidMu sync.Mutex
 
 func applyModifier(modifier byte, event string) {
 	switch event {
@@ -36,7 +40,10 @@ func applyKey(key byte, event string) {
 	} 
 }
 
-func sendKeystrokesToServer(keystroke string, hidg *os.File) {
+func sendKeystrokesToServer(keystroke string, hidg io.Writer) {
+	hidMu.Lock()
+	defer hidMu.Unlock()
+
 	// Release all keys
 	if keystroke == "release_all" {
 		// Write the zeros to hidg to release all keys
@@ -100,7 +107,7 @@ const keyboardLayout = "sv"
 // Press and release a key by KeyboardEvent.code with extra modifiers (bits of
 // byte 0) held. Modifiers already held (e.g. a latched Ctrl) are left untouched
 // and everything we added is released afterwards.
-func tapKey(code string, mods byte, hidg *os.File) {
+func tapKey(code string, mods byte, hidg io.Writer) {
 	keyCode, ok := keyMap[code]
 	if !ok {
 		return
@@ -126,7 +133,7 @@ func tapKey(code string, mods byte, hidg *os.File) {
 
 // Type a single character using the configured layout. Unmappable characters
 // are ignored.
-func typeRune(r rune, hidg *os.File) {
+func typeRune(r rune, hidg io.Writer) {
 	switch {
 	case r >= 'a' && r <= 'z':
 		tapKey("Key"+string(r-32), 0, hidg)

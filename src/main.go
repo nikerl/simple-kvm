@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"io"
@@ -40,13 +41,8 @@ func recordKeystroke(w http.ResponseWriter, r *http.Request) {
 	defer conn.Close()
 	conn.SetReadLimit(512)
 
-	// open hidg file
-	hidg, err := os.OpenFile("/dev/hidg0", os.O_WRONLY, 0)
-	if err != nil {
-		fmt.Println("hidg:", err)
-		return
-	}
-	defer hidg.Write([]byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00})
+	// Release everything when the session ends so no key stays stuck
+	defer sendKeystrokesToServer("release_all", gadget)
 
 
 	// Unblock ReadMessage when the session dies
@@ -60,8 +56,14 @@ func recordKeystroke(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			return
 		}
-		sendKeystrokesToServer(string(msg), hidg)
+		sendKeystrokesToServer(string(msg), gadget)
 	}
+}
+
+func handleStatus(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Cache-Control", "no-store")
+	json.NewEncoder(w).Encode(gadget.Status())
 }
 
 func handleSnapshot(w http.ResponseWriter, r *http.Request) {
@@ -80,6 +82,9 @@ func handleSnapshot(w http.ResponseWriter, r *http.Request) {
 func main() {
 	fmt.Println("Starting Simple KVM")
 
+	// Create/adopt the USB HID gadget and keep it healthy
+	go gadget.Watch()
+
 	mux := http.NewServeMux()
 
 	// Login Logout
@@ -92,6 +97,9 @@ func main() {
 
 	// Keystrokes
 	mux.HandleFunc("/keystroke", requireAuth(recordKeystroke))
+
+	// Keyboard gadget status
+	mux.HandleFunc("GET /status", requireAuth(handleStatus))
 
 	// Stream proxy
 	target, _ := url.Parse(os.Getenv("USTREAMER_URL"))

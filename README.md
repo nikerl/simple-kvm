@@ -28,23 +28,15 @@ Add this to /boot/config.txt or /boot/firmware/config.txt (whichever exists) and
 dtoverlay=dwc2,dr_mode=peripheral
 ```
 
+Load the USB gadget kernel module at boot, then reboot:
+```bash
+echo libcomposite | sudo tee /etc/modules-load.d/libcomposite.conf
+sudo reboot
+```
+
 Check that a UDC exists: `ls /sys/class/udc` (shows fe980000.usb).
 
-```bash
-# Install and run the USB Gadget script
-sudo cp conf/kvm-gadget.sh /usr/local/bin/
-sudo chmod +x /usr/local/bin/kvm-gadget.sh
-sudo bash -x /usr/local/bin/kvm-gadget.sh
-
-# Create a service that runs on startup to install the gadget
-sudo cp conf/kvm-gadget.service /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable --now kvm-gadget.service
-
-# Test the USB gadget to make sure it works
-printf '\0\0\x0b\0\0\0\0\0' > /dev/hidg0   # press h
-printf '\0\0\0\0\0\0\0\0'   > /dev/hidg0   # release
-```
+The Simple KVM container creates the USB keyboard gadget itself and keeps an eye on it, so nothing else needs to run on the host. For that, the container mounts `/sys/kernel/config` and is allowed to open the `hidg` device (see `device_cgroup_rules` in the compose file). On first start after a boot the container creates the gadget and then restarts itself once to get access to the new device. This is expected.
 
 ### Simple KVM and µStreamer
 Clone the repo and prepare the docker compose file:
@@ -62,13 +54,14 @@ docker compose up -d
 ```
 
 ## Debugging
-If the program stops sending keystrokes to the server try to reset the HID device
-```bash
-# Reset the HID device
-echo "" | sudo tee /sys/kernel/config/usb_gadget/kvm/UDC
-echo fe980000.usb | sudo tee /sys/kernel/config/usb_gadget/kvm/UDC
+The coloured dot next to the title shows the keyboard status (hover for details): green when connected, yellow when the target is asleep or the KVM is recovering, red when the target isn't connected or the gadget couldn't be set up.
 
-# Check the current state, should print "configured"
+The app checks the gadget every 2 seconds and repairs it automatically: it rebuilds it if it's missing or broken, and resets the USB connection if the target stops accepting keystrokes. Check `docker logs simple-kvm` for lines starting with `gadget:` to see what it did.
+
+If the logs say it can't open `/dev/hidg0` with "operation not permitted", the `hidg` major number differs from the one in the compose file. Check it with `grep hidg /proc/devices` and update `device_cgroup_rules`.
+
+```bash
+# Check the current USB state, should print "configured"
 cat /sys/class/udc/fe980000.usb/state
 ```
 
