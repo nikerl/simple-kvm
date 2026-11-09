@@ -1,5 +1,14 @@
 # Simple KVM
-Simple KVM is a very basic IP KVM for when PiKVM is overkill. 
+Simple KVM is a very basic IP KVM for when PiKVM is overkill. Simple KVM has a simple but responsive UI that works well on both desktop and mobile. The following features are implemented:
+
+- Video ouptut
+- Keyboard input, both physical keyboards and mobile soft keyboards
+- Responsive UI that works on both desktop and mobile
+- Screenshot button
+- Simple authentication and session management for one user
+
+<img width="2117" height="872" alt="kvm-image" src="https://github.com/user-attachments/assets/ba8703b4-9d27-4a95-b722-17af0cd70250" />
+
 
 ## Requirements
 - A SBC with at least 1x USB A port and 1x USB-OTG port, for example Raspberry Pi 4.
