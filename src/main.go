@@ -120,7 +120,12 @@ func main() {
 	})
 
 	// Serve static files
-	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+	staticFiles := http.StripPrefix("/static/", http.FileServer(http.Dir("static")))
+	mux.Handle("/static/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Cache the files, but revalidate each load (FileServer answers 304 if unchanged)
+		w.Header().Set("Cache-Control", "no-cache")
+		staticFiles.ServeHTTP(w, r)
+	}))
 
 	fmt.Println("Listening on 0.0.0.0:8090")
 	log.Fatal(http.ListenAndServe(":8090", mux))
