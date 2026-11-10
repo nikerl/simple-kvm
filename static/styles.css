@@ -291,7 +291,7 @@ input[type="password"]:focus {
         /* Fixed zoom: based on the largest possible viewport (lvh), so it doesn't
            change when the keyboard opens or the browser nav bar collapses.
            The frame shrinks instead and scrolls the stream vertically. */
-        height: calc(100lvh - var(--chrome, 70px));
+        height: calc(var(--lvh, 100lvh) - var(--chrome, 70px));
         width: auto;
         min-width: 100%;
         max-width: none;

@@ -161,6 +161,24 @@ const setChrome = () => {
 setChrome();
 window.addEventListener('resize', setChrome);
 
+// Stream zoom height: latch the largest "large viewport" height seen for the current
+// width, so the keyboard opening/closing can never shrink (zoom out) the stream.
+// Resets only when the width changes (rotation).
+const lvhProbe = document.createElement('div');
+lvhProbe.style.cssText = 'position:fixed;top:0;left:0;width:0;height:100lvh;visibility:hidden;pointer-events:none';
+document.body.appendChild(lvhProbe);
+let baseW = 0, baseH = 0;
+const setLvh = () => {
+    const w = window.innerWidth;
+    const h = lvhProbe.offsetHeight || window.innerHeight;
+    if (w !== baseW) { baseW = w; baseH = h; }
+    else if (h > baseH) baseH = h;
+    document.documentElement.style.setProperty('--lvh', baseH + 'px');
+};
+setLvh();
+window.addEventListener('resize', setLvh);
+if (window.visualViewport) window.visualViewport.addEventListener('resize', setLvh);
+
 
 
 // Mobile key bar (Ctrl latch + arrows). Buttons never take focus, so the keyboard stays open.
