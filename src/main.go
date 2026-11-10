@@ -112,6 +112,13 @@ func main() {
 	// Screenshots proxy
 	mux.HandleFunc("/snapshot", requireAuth(handleSnapshot))
 
+	// Service worker must be served from the root to control the whole app
+	mux.HandleFunc("GET /sw.js", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/javascript")
+		w.Header().Set("Cache-Control", "no-cache")
+		http.ServeFile(w, r, "static/sw.js")
+	})
+
 	// Serve static files
 	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 

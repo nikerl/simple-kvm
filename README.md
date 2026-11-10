@@ -8,6 +8,7 @@ Simple KVM is a very basic IP KVM for when PiKVM is overkill. Simple KVM has a s
 - Responsive UI that works on both desktop and mobile
 - Screenshot button
 - Simple authentication and session management for one user
+- PWA support
 
 <img width="2117" height="872" alt="kvm-image" src="https://github.com/user-attachments/assets/7806b4b9-fb73-443d-b8e9-c451692634c7" />
 

@@ -205,3 +205,9 @@ async function pollStatus() {
 }
 pollStatus();
 setInterval(pollStatus, 3000);
+
+
+// Register the service worker (makes the app installable)
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch((e) => console.warn('SW registration failed:', e));
+}
