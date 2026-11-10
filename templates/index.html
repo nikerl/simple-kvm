@@ -5,8 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simple KVM</title>
-    <script src="/static/app.js?v=3" defer></script>
-    <link rel="stylesheet" href="/static/styles.css?v=3">
+    <script src="/static/app.js?v=4" defer></script>
+    <link rel="stylesheet" href="/static/styles.css?v=4">
     <link rel="shortcut icon" href="/static/assets/favicon.png" type="image/x-icon">
     <link rel="apple-touch-icon" href="/static/assets/apple-touch-icon.png">
     <link rel="manifest" href="/static/manifest.json">
@@ -34,10 +34,10 @@
         <button data-key="ControlLeft" data-toggle>Ctrl</button>
         <button data-key="Tab">Tab</button>
         <span class="spacer"></span>
-        <button data-key="ArrowLeft">&larr;</button>
-        <button data-key="ArrowUp">&uarr;</button>
-        <button data-key="ArrowDown">&darr;</button>
-        <button data-key="ArrowRight">&rarr;</button>
+        <button data-key="ArrowLeft" aria-label="Left"><svg class="arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H5M12 5l-7 7 7 7"/></svg></button>
+        <button data-key="ArrowUp" aria-label="Up"><svg class="arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V5M5 12l7-7 7 7"/></svg></button>
+        <button data-key="ArrowDown" aria-label="Down"><svg class="arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v15M5 12l7 7 7-7"/></svg></button>
+        <button data-key="ArrowRight" aria-label="Right"><svg class="arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M12 5l7 7-7 7"/></svg></button>
     </div>
 
     <input id="kbin" type="password" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" enterkeyhint="enter" data-lpignore="true" data-1p-ignore>
