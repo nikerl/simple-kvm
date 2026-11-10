@@ -324,4 +324,11 @@ input[type="password"]:focus {
     .login-container form {
         grid-template-columns: 1fr;
     }
+
+    /* Login page: same side inset as the signed-out overlay box
+       (overlay padding 16px + margin 12px = 28px per side) */
+    body.login-page .login-container {
+        width: calc(100% - 56px);
+        margin: 0;
+    }
 }
