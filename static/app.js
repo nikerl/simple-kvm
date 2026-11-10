@@ -3,6 +3,7 @@ const kbin = document.getElementById('kbin');
 
 let ws;
 let reconnectTimer = null;
+let hasConnected = false;
 
 const connect = () => {
     ws = new WebSocket(
@@ -10,6 +11,8 @@ const connect = () => {
     );
     ws.onopen = () => {
         console.log('WebSocket connected');
+        if (hasConnected) reloadStream();   // reconnect: the stream probably died too
+        hasConnected = true;
     };
     ws.onerror = (error) => {
         console.error('WebSocket error:', error);
@@ -44,6 +47,25 @@ connect();
 setInterval(() => {
     if (ws.readyState === WebSocket.OPEN) ws.send('ping');
 }, 20000);
+
+// Restart the MJPEG stream. Mobile browsers suspend or kill the connection while the
+// tab/PWA is in the background, and an <img> never reconnects by itself (goes black).
+const screenImg = document.getElementById('screen');
+let streamRetry = null;
+const reloadStream = () => {
+    clearTimeout(streamRetry);
+    screenImg.src = '/stream?t=' + Date.now();   // new URL = new connection, old one is aborted
+};
+screenImg.addEventListener('error', () => {
+    clearTimeout(streamRetry);
+    streamRetry = setTimeout(reloadStream, 2000);
+});
+let hiddenAt = 0;
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { hiddenAt = Date.now(); return; }
+    if (hiddenAt && Date.now() - hiddenAt > 2000) reloadStream();   // skip quick app switches
+});
+window.addEventListener('pageshow', (e) => { if (e.persisted) reloadStream(); });
 
 // Reconnect right away when the tab becomes visible again
 document.addEventListener('visibilitychange', () => {
