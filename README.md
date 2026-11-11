@@ -10,8 +10,7 @@ Simple KVM is a very basic IP KVM for when PiKVM is overkill. Simple KVM has a s
 - Simple authentication and session management for one user
 - PWA support
 
-<img width="2117" height="872" alt="kvm-image" src="https://github.com/user-attachments/assets/7806b4b9-fb73-443d-b8e9-c451692634c7" />
-
+<img width="2628" height="1097" alt="kvm-image" src="https://github.com/user-attachments/assets/d9326b62-eb2c-492c-9596-3a0d7715293f" />
 
 ## Requirements
 - A SBC with at least 1x USB A port and 1x USB-OTG port, for example Raspberry Pi 4.
@@ -26,7 +25,7 @@ Plug the USB capture card into a USB A port on the SBC and connect an HDMI cable
 ### Keyboard HID Input 
 If you are using a power/data splitter as descibed above now is the time to plug it in. Connect a USB C to C cable between the SBC and the RPi4 port on the splitter. Then plug the powersupply into the power port, and finally use a USB A to C cable to connect the server and with the splitters data port.
 
-Add this to /boot/config.txt or /boot/firmware/config.txt (whichever exists) and reboot:
+Add this to `/boot/config.txt` or `/boot/firmware/config.txt` (whichever exists) and reboot:
 ```
 dtoverlay=dwc2,dr_mode=peripheral
 ```
