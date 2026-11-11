@@ -1,7 +1,7 @@
 {
   "id": "/",
   "name": "Simple KVM",
-  "short_name": "KVM",
+  "short_name": "Simple KVM",
   "description": "Remote keyboard and screen for a headless machine",
   "start_url": "/",
   "scope": "/",
